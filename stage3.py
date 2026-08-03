@@ -18,8 +18,8 @@ class DroughtModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x))
         return x
-if __name__ == "__main__":
-    model = DroughtModel()
-    model.eval()
-    with torch.no_grad():
-        prediction = model(transformed_tensor)
+        model = DroughtModel()
+        model.eval()
+        with torch.no_grad():
+            prediction = model(transformed_tensor)
+        return prediction
