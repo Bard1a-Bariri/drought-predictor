@@ -45,15 +45,20 @@ GROUND_TRANSFORM = transforms.Compose([
 @st.cache_resource
 def load_ground_model():
     model = GroundDroughtModel()
+    loaded_successfully = False
     try:
         model.load_state_dict(torch.load("ground_water_stress.pth", map_location=DEVICE))
-        st.sidebar.success(" Loaded Ground Model")
+        loaded_successfully = True
     except Exception as e:
-        st.sidebar.warning(" Could not load ground_water_stress.pth (using unweighted model)")
+        loaded_successfully = False
     model.to(DEVICE)
     model.eval()
     return model
-
+ground_model, is_loaded = load_ground_model()
+if is_loaded:
+    st.sidebar.success(" Loaded Ground Model")
+else:
+    st.sidebar.warning(" Could not load ground_water_stress.pth (using unweighted model)")
 @st.cache_resource
 def load_satellite_model():
     model = SatelliteDroughtModel(in_channels=10, num_classes=4)
@@ -70,14 +75,13 @@ ground_model = load_ground_model()
 satellite_model = load_satellite_model()
 
 st.title("🌾 Dual-Scale Drought Intelligence Platform")
-st.markdown(f"**Hardware Acceleration status:** `{DEVICE.type.upper()}`")
 st.markdown("---")
 
 tab1, tab2 = st.tabs(["🌿 Microscopic Ground Leaf Analysis", "🛰️ Regional Satellite Assessment"])
 
 with tab1:
     st.header("Ground Leaf Stress Diagnostic")
-    st.write("Upload a close-up photograph of plant leaves to analyze cellular moisture stress and inspect Grad-CAM focus areas.")
+    st.write("Upload a photo of plant leaves to analyze cellular moisture stress and inspect Grad-CAM focus areas.")
 
     uploaded_file = st.camera_input("Take a picture of a leaf...")
 
@@ -126,30 +130,46 @@ with tab1:
 
 with tab2:
     st.header("Regional Landsat 8 Forage Index")
-    st.write("Analyze 10-band multi-spectral satellite tensor arrays to determine grazing land capacity.")
+    st.write("Upload a satellite tile image to determine grazing land capacity.")
 
-    st.info("Simulate satellite array tensor feed or test demo arrays.")
+    sat_file = st.file_uploader("Upload Satellite Tile (JPG/PNG)", type=["jpg", "jpeg", "png"], key="sat_uploader")
 
-    if st.button("Generate Random 10-Band Satellite Patch", type="primary"):
-        with st.spinner("Processing multi-spectral array..."):
-            dummy_satellite_tensor = torch.randn(1, 10, 65, 65).to(DEVICE)
-            
-            res = calculate_pred(dummy_satellite_tensor, satellite_model)
-            pred_class = res["predicted_class"]
-            probs = res["class_probabilities"]
-
-        st.subheader("Model Prediction")
+    if sat_file is not None:
+        raw_sat_img = Image.open(sat_file).convert("RGB")
         
-        class_labels = [
-            "Class 0: 0% Forage (Barren / Desert)",
-            "Class 1: 1-30% Forage (Sparse Vegetation)",
-            "Class 2: 31-60% Forage (Moderate Growth)",
-            "Class 3: >60% Forage (Dense Pasture)",
-        ]
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Uploaded Tile")
+            st.image(raw_sat_img, use_container_width=True)
 
-        st.success(f"**Predicted Tier:** {class_labels[pred_class]}")
+        rgb_tensor = SATELLITE_TRANSFORM(raw_sat_img)
 
-        st.subheader("Probability Distribution Across Classes")
-        for i, (label, prob) in enumerate(zip(class_labels, probs)):
-            st.write(f"**{label}**")
-            st.progress(prob)
+        if rgb_tensor.shape[0] == 3:
+            ten_band_tensor = torch.cat([rgb_tensor, rgb_tensor, rgb_tensor, rgb_tensor[:1]], dim=0)
+        else:
+            ten_band_tensor = rgb_tensor
+
+        input_satellite_tensor = ten_band_tensor.unsqueeze(0).to(DEVICE)
+
+        if st.button("Run Satellite Analysis", type="primary"):
+            with st.spinner("Processing spectral array..."):
+                res = calculate_pred(input_satellite_tensor, sat_model)
+                pred_class = res["predicted_class"]
+                probs = res["class_probabilities"]
+
+            with col2:
+                st.subheader("Model Prediction")
+                
+                class_labels = [
+                    "Class 0: 0% Forage (Barren / Desert)",
+                    "Class 1: 1-30% Forage (Sparse Vegetation)",
+                    "Class 2: 31-60% Forage (Moderate Growth)",
+                    "Class 3: >60% Forage (Dense Pasture)",
+                ]
+
+                st.success(f"**Predicted Tier:** {class_labels[pred_class]}")
+
+                st.subheader("Probability Distribution")
+                for label, prob in zip(class_labels, probs):
+                    st.write(f"**{label}**")
+                    st.progress(float(prob))
