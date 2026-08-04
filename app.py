@@ -16,7 +16,7 @@ def download_and_load_models():
     if not os.path.exists(sat_path):
         sat_id = "YOUR_SATELLITE_DRIVE_FILE_ID"
         gdown.download(id=sat_id, output=sat_path, quiet=False)
-
+download_and_load_models()
 from model import (
     GroundDroughtModel,
     SatelliteDroughtModel,

@@ -4,3 +4,4 @@ torchvision
 gdown
 Pillow
 numpy
+os
