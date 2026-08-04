@@ -7,13 +7,11 @@ import gdown
 
 @st.cache_resource
 def download_and_load_models():
-    # Ground Model Check
     ground_path = "ground_water_stress.pth"
     if not os.path.exists(ground_path):
         ground_id = "YOUR_GROUND_DRIVE_FILE_ID"
         gdown.download(id=ground_id, output=ground_path, quiet=False)
 
-    # Satellite Model Check
     sat_path = "satellite_droughtwatch.pth"
     if not os.path.exists(sat_path):
         sat_id = "YOUR_SATELLITE_DRIVE_FILE_ID"
