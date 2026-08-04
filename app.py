@@ -47,18 +47,25 @@ def load_ground_model():
     model = GroundDroughtModel()
     loaded_successfully = False
     try:
-        model.load_state_dict(torch.load("ground_water_stress.pth", map_location=DEVICE))
+        model.load_state_dict(
+            torch.load("ground_water_stress.pth", map_location=DEVICE, weights_only=False),
+            strict=False
+        )
         loaded_successfully = True
     except Exception as e:
         loaded_successfully = False
+
     model.to(DEVICE)
     model.eval()
+    
     return model, loaded_successfully
+
 ground_model, is_loaded = load_ground_model()
+
 if is_loaded:
-    st.sidebar.success(" Loaded Ground Model")
+    st.sidebar.success("Loaded Ground Model")
 else:
-    st.sidebar.warning(" Could not load ground_water_stress.pth (using unweighted model)")
+    st.sidebar.warning("Could not load ground_water_stress.pth (using unweighted model)")
 @st.cache_resource
 def load_satellite_model():
     model = SatelliteDroughtModel(in_channels=10, num_classes=4)
