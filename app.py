@@ -53,7 +53,7 @@ def load_ground_model():
         loaded_successfully = False
     model.to(DEVICE)
     model.eval()
-    return model
+    return model, loaded_successfully
 ground_model, is_loaded = load_ground_model()
 if is_loaded:
     st.sidebar.success(" Loaded Ground Model")
