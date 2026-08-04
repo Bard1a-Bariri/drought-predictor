@@ -9,6 +9,8 @@ import gdown
 @st.cache_resource
 def download_and_load_models():
     ground_path = "ground_water_stress.pth"
+    if os.path.exists(ground_path) and os.path.getsize(ground_path) < 1_000_000:
+        os.remove(ground_path)
     if not os.path.exists(ground_path):
         ground_id = "1WDDSMYceMJ9NrzdGAkVnun4kNEtWE1PG"
         gdown.download(id=ground_id, output=ground_path, quiet=False)
