@@ -8,8 +8,9 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 def preprocessimg(uploaded_file):
-    show = Image.open(uploaded_file).convert("RGB")
-    st.image(show, caption="Original Upload", width=300)
-    transformed_tensor = transform(show)
+    raw_image = Image.open(uploaded_file).convert("RGB")
+    
+    transformed_tensor = transform(raw_image)
     ready_tensor = transformed_tensor.unsqueeze(0)
-    return ready_tensor, show
+    
+    return ready_tensor, raw_image

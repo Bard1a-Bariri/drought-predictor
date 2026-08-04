@@ -5,29 +5,56 @@ import torch.nn.functional as F
 import numpy as np
 from PIL import Image
 from torchvision.models import ResNet18_Weights, resnet18
-class DroughtModelResNet(nn.Module):
+class GroundDroughtModel(nn.Module):
     def __init__(self):
-        super(DroughtModelResNet, self).__init__()
+        super(GroundDroughtModel, self).__init__()
         self.model = resnet18(weights=ResNet18_Weights.DEFAULT)
-        for param in self.model.parameters():
-            param.requires_grad = False
+        
+        for param in self.model.layer4.parameters():
+            param.requires_grad = True
+            
         in_features = self.model.fc.in_features
-        self.model.fc = nn.Sequential(
-            nn.Linear(in_features, 1),
-            nn.Sigmoid()
-        )
+        self.model.fc = nn.Linear(in_features, 1)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class SatelliteDroughtModel(nn.Module):
+    def __init__(self, in_channels=10, num_classes=4):
+        super(SatelliteDroughtModel, self).__init__()
+        self.model = resnet18(weights=ResNet18_Weights.DEFAULT)
+        
+        if in_channels != 3:
+            self.model.conv1 = nn.Conv2d(
+                in_channels, 64, kernel_size=7, stride=2, padding=3, bias=False
+            )
+            
+        in_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(in_features, num_classes)
+
     def forward(self, x):
         return self.model(x)
 def calculate_pred(ready_tensor, model):
     model.eval()
     with torch.no_grad():
-        prediction = model(ready_tensor)
-    return prediction.item()
+        logits = model(ready_tensor)
+        
+        if logits.shape[-1] == 1:
+            score = torch.sigmoid(logits).item()
+            return {"type": "ground", "risk_score": score}
+        
+        else:
+            probs = F.softmax(logits, dim=1)
+            pred_class = torch.argmax(probs, dim=1).item()
+            return {
+                "type": "satellite",
+                "predicted_class": pred_class,
+                "class_probabilities": probs.squeeze().tolist()
+            }
 def generate_gradcam(ready_tensor, model, raw_image):
-    """Generates an authentic activation heatmap highlighting pixels driving the model decision."""
     model.eval()
 
-    # Target the last convolutional layer of ResNet18
     target_layer = model.model.layer4[-1]
 
     gradients = []
@@ -46,7 +73,7 @@ def generate_gradcam(ready_tensor, model, raw_image):
     output = model(ready_tensor)
     model.zero_grad()
 
-    output.backward()
+    output.backward(gradient=torch.ones_like(output))
     hook_handle.remove()
 
     act = activations[0].detach().cpu().numpy()[0]
@@ -72,7 +99,6 @@ def generate_gradcam(ready_tensor, model, raw_image):
     blended = cv2.addWeighted(img_array, 0.6, heatmap_colored, 0.4, 0)
 
     return Image.fromarray(blended)
-
 
 def generate_prescriptive_drills(prediction_score):
     risk_percentage = prediction_score * 100

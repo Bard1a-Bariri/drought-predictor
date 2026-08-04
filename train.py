@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from model import DroughtModelResNet
+from model import GroundDroughtModel as DroughtModelResNet
 
 def prepare_dataset(source_dir, target_dir, val_ratio=0.2):
     if os.path.exists(os.path.join(target_dir, "train")) and os.path.exists(
@@ -62,18 +62,21 @@ def prepare_dataset(source_dir, target_dir, val_ratio=0.2):
                 shutil.copy(src, dst)
 
 def main():
-    RAW_DATASET_DIR = "ground_water_stress_raw"  
+    RAW_DATASET_DIR = "ground_water_stress"  
     DATASET_DIR = "dataset"
-    BATCH_SIZE = 32
+    BATCH_SIZE = 8
     LEARNING_RATE = 0.001
-    EPOCHS = 10
-    SAVE_FILENAME = "ground_crop_model.pth"
+    EPOCHS = 40
+    SAVE_FILENAME = "ground_water_stress.pth"
 
+    prepare_dataset(RAW_DATASET_DIR, DATASET_DIR)
 
     train_transform = transforms.Compose([
         transforms.Resize((224, 224)),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.RandomVerticalFlip(p=0.5),
+        transforms.RandomRotation(degrees=15),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2), 
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
@@ -97,8 +100,11 @@ def main():
 
     model = DroughtModelResNet().to(device)
 
-    criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.model.fc.parameters(), lr=LEARNING_RATE)
+    criterion = nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam([
+        {'params': model.model.layer4.parameters(), 'lr': 1e-5},  
+        {'params': model.model.fc.parameters(), 'lr': 1e-3}      
+    ])
 
     best_val_acc = 0.0
 
@@ -128,7 +134,7 @@ def main():
                 labels = labels.to(device)
 
                 outputs = model(images)
-                preds = (outputs > 0.5).squeeze().long()
+                preds = (outputs > 0.0).squeeze(dim=1).long()
                 val_corrects += torch.sum(preds == labels.data)
 
         val_acc = val_corrects.double() / len(val_dataset)
