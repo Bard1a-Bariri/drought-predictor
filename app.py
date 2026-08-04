@@ -77,7 +77,7 @@ with tab1:
     st.header("Ground Leaf Stress Diagnostic")
     st.write("Upload a close-up photograph of plant leaves to analyze cellular moisture stress and inspect Grad-CAM focus areas.")
 
-    uploaded_file = st.file_uploader("Choose a leaf image...", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.camera_input("Take a picture of a leaf...")
 
     if uploaded_file is not None:
         raw_img = Image.open(uploaded_file).convert("RGB")
