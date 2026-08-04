@@ -9,12 +9,12 @@ import gdown
 def download_and_load_models():
     ground_path = "ground_water_stress.pth"
     if not os.path.exists(ground_path):
-        ground_id = "YOUR_GROUND_DRIVE_FILE_ID"
+        ground_id = "1WDDSMYceMJ9NrzdGAkVnun4kNEtWE1PG"
         gdown.download(id=ground_id, output=ground_path, quiet=False)
 
     sat_path = "satellite_droughtwatch.pth"
     if not os.path.exists(sat_path):
-        sat_id = "YOUR_SATELLITE_DRIVE_FILE_ID"
+        sat_id = "17h_ATL2kZrS0VTXIMXpytH6VsFi1jSB8"
         gdown.download(id=sat_id, output=sat_path, quiet=False)
 download_and_load_models()
 from model import (
