@@ -188,7 +188,7 @@ with tab2:
                 pred_class = res["predicted_class"]
                 probs = res["class_probabilities"]
 
-                drought_risk_score = (probs[0] * 1.0) + (probs[1] * 0.70) + (probs[2] * 0.35) + (probs[3] * 0.0)
+                drought_risk_score = (probs[0] * 1.00) + (probs[1] * 0.85) + (probs[2] * 0.20) + (probs[3] * 0.00)
                 drought_percentage = float(drought_risk_score) * 100        
 
                 if drought_percentage >= 70:
