@@ -84,7 +84,6 @@ def load_satellite_model():
     model.eval()
     return model
 
-ground_model = load_ground_model()
 satellite_model = load_satellite_model()
 
 st.title("🌾 Dual-Scale Drought Intelligence Platform")
