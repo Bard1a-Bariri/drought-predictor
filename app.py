@@ -42,6 +42,12 @@ GROUND_TRANSFORM = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
+SATELLITE_TRANSFORM = transforms.Compose([
+    transforms.Resize((65, 65)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
 @st.cache_resource
 def load_ground_model():
     model = GroundDroughtModel()
@@ -84,13 +90,13 @@ satellite_model = load_satellite_model()
 st.title("🌾 Dual-Scale Drought Intelligence Platform")
 st.markdown("---")
 
-tab1, tab2 = st.tabs(["🌿 Microscopic Ground Leaf Analysis", "🛰️ Regional Satellite Assessment"])
+tab1, tab2 = st.tabs(["🌿Ground Assesment", "🛰️ Satellite Assessment"])
 
 with tab1:
-    st.header("Ground Leaf Stress Diagnostic")
-    st.write("Upload a photo of plant leaves to analyze cellular moisture stress and inspect Grad-CAM focus areas.")
+    st.header("Ground Drought Calculator")
+    st.write("Upload a photo of plant leaves to analyze water stress levels...")
 
-    uploaded_file = st.camera_input("Take a picture of a leaf...")
+    uploaded_file = st.camera_input("Take a picture...")
 
     if uploaded_file is not None:
         raw_img = Image.open(uploaded_file).convert("RGB")
