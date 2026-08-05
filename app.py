@@ -108,8 +108,8 @@ with tab1:
 
         input_tensor = GROUND_TRANSFORM(raw_img).unsqueeze(0).to(DEVICE)
 
-        if st.button("Run Diagnostic", type="primary"):
-            with st.spinner("Analyzing cell wall structure & running Grad-CAM..."):
+        if st.button("Run", type="primary"):
+            with st.spinner("Analyzing image & preparing heatmap..."):
                 result = calculate_pred(input_tensor, ground_model)
                 risk_score = result["risk_score"]
                 tier, drills = generate_prescriptive_drills(risk_score)
@@ -117,11 +117,11 @@ with tab1:
                 gradcam_img = generate_gradcam(input_tensor, ground_model, raw_img)
 
             with col2:
-                st.subheader("Grad-CAM Explainability Map")
+                st.subheader("Corresponding Heatmap")
                 st.image(gradcam_img, use_container_width=True)
 
             st.markdown("---")
-            st.subheader("Diagnostic Results")
+            st.subheader("Results")
 
             metric_col1, metric_col2 = st.columns(2)
             with metric_col1:
@@ -136,12 +136,12 @@ with tab1:
                 else:
                     st.success(f"Alert Level: {tier}")
 
-            st.subheader("📋 Prescriptive Drill Protocols")
+            st.subheader("📋 What to do next")
             for step in drills:
                 st.markdown(f"* {step}")
 
 with tab2:
-    st.header("Regional Landsat 8 Forage Index")
+    st.header("Satellite Landscape Index")
     st.write("Upload a satellite tile image to determine grazing land capacity.")
 
     sat_file = st.file_uploader("Upload Satellite Tile (JPG/PNG)", type=["jpg", "jpeg", "png"], key="sat_uploader")
