@@ -157,25 +157,27 @@ with tab2:
 
         rgb_tensor = SATELLITE_TRANSFORM(raw_sat_img)
 
+        
         R = rgb_tensor[0:1, :, :]
         G = rgb_tensor[1:2, :, :]
         B = rgb_tensor[2:3, :, :]
 
-        NIR = torch.clamp(G * 1.5, 0.0, 1.0)      
-        SWIR1 = torch.clamp(G * 0.8, 0.0, 1.0)     
-        SWIR2 = torch.clamp(R * 0.5, 0.0, 1.0)     
+        NIR = G * 2.0         
+        SWIR1 = G * 0.5       
+        SWIR2 = R * 0.3       
+
 
         ten_band_tensor = torch.cat([
             B,      
-            B,     
-            G,      
+            B,      
+            G,     
             R,      
             NIR,    
             SWIR1,  
             SWIR2,  
-            G,    
-            B,     
-            R       
+            G,     
+            B,      
+            R      
         ], dim=0)
 
         input_satellite_tensor = ten_band_tensor.unsqueeze(0).to(DEVICE)
