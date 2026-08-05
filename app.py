@@ -191,7 +191,7 @@ with tab2:
                 drought_risk_score = (probs[0] * 1.00) + (probs[1] * 0.85) + (probs[2] * 0.10) + (probs[3] * 0.00)
                 drought_percentage = float(drought_risk_score) * 100        
 
-                if drought_percentage >= 70:
+                if drought_percentage >= 60:
                     status_tier = "CRITICAL DROUGHT RISK"
                     status_color = "error"
                     next_steps = [
@@ -199,7 +199,7 @@ with tab2:
                         "💧 **Water Management:** Enforce immediate agricultural water rationing in high-risk zones.",
                         "🛰️ **High-Frequency Monitoring:** Schedule daily satellite spectral re-scans."
                     ]
-                elif drought_percentage >= 40:
+                elif drought_percentage >= 30:
                     status_tier = "MODERATE DROUGHT WARNING"
                     status_color = "warning"
                     next_steps = [
