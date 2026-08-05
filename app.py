@@ -164,25 +164,67 @@ with tab2:
 
         input_satellite_tensor = ten_band_tensor.unsqueeze(0).to(DEVICE)
 
-        if st.button("Run Satellite Analysis", type="primary"):
+       if st.button("Run Satellite Analysis", type="primary"):
             with st.spinner("Processing spectral array..."):
                 res = calculate_pred(input_satellite_tensor, satellite_model)
                 pred_class = res["predicted_class"]
                 probs = res["class_probabilities"]
 
+                drought_risk_score = (probs[0] * 1.0) + (probs[1] * 0.66) + (probs[2] * 0.33) + (probs[3] * 0.0)
+                drought_percentage = float(drought_risk_score) * 100
+
+                if drought_percentage >= 70:
+                    status_tier = "CRITICAL DROUGHT RISK"
+                    status_color = "error"
+                    next_steps = [
+                        "🚨 **Emergency Livestock Relocation:** Initiate pasture transfer or supplemental feeding immediately.",
+                        "💧 **Water Management:** Enforce immediate agricultural water rationing in high-risk zones.",
+                        "🛰️ **High-Frequency Monitoring:** Schedule daily satellite spectral re-scans."
+                    ]
+                elif drought_percentage >= 40:
+                    status_tier = "MODERATE DROUGHT WARNING"
+                    status_color = "warning"
+                    next_steps = [
+                        "🌾 **Rotational Grazing:** Reduce grazing density on sparse vegetation patches.",
+                        "🚰 **Irrigation Efficiency:** Audit and adjust drip/sprinkler systems for targeted delivery.",
+                        "📊 **Soil Moisture Audits:** Perform ground-level soil testing in vulnerable sections."
+                    ]
+                else:
+                    status_tier = "HEALTHY / MINIMAL DROUGHT RISK"
+                    status_color = "success"
+                    next_steps = [
+                        "✅ **Maintain Standard Rotation:** Forage capacity is sufficient for normal herd density.",
+                        "🌱 **Soil Health Monitoring:** Keep standard seasonal monitoring schedule.",
+                        "🌧️ **Rainwater Capture:** Prepare infrastructure for upcoming dry cycles."
+                    ]
+
             with col2:
-                st.subheader("Model Prediction")
+                st.subheader("Model Diagnostics")
                 
+                st.metric(label="Calculated Drought Risk Index", value=f"{drought_percentage:.1f}%")
+                st.progress(float(drought_risk_score))
+
                 class_labels = [
-                    "Class 0: 0% Forage (Barren / Desert)",
-                    "Class 1: 1-30% Forage (Sparse Vegetation)",
-                    "Class 2: 31-60% Forage (Moderate Growth)",
-                    "Class 3: >60% Forage (Dense Pasture)",
+                    "Class 0: Barren / Desert (High Risk)",
+                    "Class 1: Sparse Vegetation (Moderate Risk)",
+                    "Class 2: Moderate Growth (Low Risk)",
+                    "Class 3: Dense Pasture (Minimal Risk)",
                 ]
 
-                st.success(f"**Predicted Tier:** {class_labels[pred_class]}")
+                if status_color == "error":
+                    st.error(f"**Status:** {status_tier}")
+                elif status_color == "warning":
+                    st.warning(f"**Status:** {status_tier}")
+                else:
+                    st.success(f"**Status:** {status_tier}")
 
-                st.subheader("Probability Distribution")
+                st.markdown("---")
+                st.subheader("Class Probability Distribution")
                 for label, prob in zip(class_labels, probs):
-                    st.write(f"**{label}**")
+                    st.write(f"**{label}:** `{float(prob)*100:.1f}%`")
                     st.progress(float(prob))
+
+            st.markdown("---")
+            st.subheader("📋 Recommended Next Steps")
+            for step in next_steps:
+                st.markdown(f"* {step}")
