@@ -164,7 +164,7 @@ with tab2:
 
         input_satellite_tensor = ten_band_tensor.unsqueeze(0).to(DEVICE)
 
-       if st.button("Run Satellite Analysis", type="primary"):
+        if st.button("Run Satellite Analysis", type="primary"):
             with st.spinner("Processing spectral array..."):
                 res = calculate_pred(input_satellite_tensor, satellite_model)
                 pred_class = res["predicted_class"]
