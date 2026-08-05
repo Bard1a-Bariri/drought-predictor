@@ -157,10 +157,26 @@ with tab2:
 
         rgb_tensor = SATELLITE_TRANSFORM(raw_sat_img)
 
-        if rgb_tensor.shape[0] == 3:
-            ten_band_tensor = torch.cat([rgb_tensor, rgb_tensor, rgb_tensor, rgb_tensor[:1]], dim=0)
-        else:
-            ten_band_tensor = rgb_tensor
+        R = rgb_tensor[0:1, :, :]
+        G = rgb_tensor[1:2, :, :]
+        B = rgb_tensor[2:3, :, :]
+
+        NIR = torch.clamp(G * 1.5, 0.0, 1.0)      
+        SWIR1 = torch.clamp(G * 0.8, 0.0, 1.0)     
+        SWIR2 = torch.clamp(R * 0.5, 0.0, 1.0)     
+
+        ten_band_tensor = torch.cat([
+            B,      
+            B,     
+            G,      
+            R,      
+            NIR,    
+            SWIR1,  
+            SWIR2,  
+            G,    
+            B,     
+            R       
+        ], dim=0)
 
         input_satellite_tensor = ten_band_tensor.unsqueeze(0).to(DEVICE)
 
@@ -170,8 +186,8 @@ with tab2:
                 pred_class = res["predicted_class"]
                 probs = res["class_probabilities"]
 
-                drought_risk_score = (probs[0] * 1.0) + (probs[1] * 0.66) + (probs[2] * 0.33) + (probs[3] * 0.0)
-                drought_percentage = float(drought_risk_score) * 100
+                drought_risk_score = (probs[0] * 1.0) + (probs[1] * 0.70) + (probs[2] * 0.35) + (probs[3] * 0.0)
+                drought_percentage = float(drought_risk_score) * 100        
 
                 if drought_percentage >= 70:
                     status_tier = "CRITICAL DROUGHT RISK"
