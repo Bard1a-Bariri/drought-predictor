@@ -5,3 +5,4 @@ numpy
 pillow
 gdown
 opencv-python-headless
+weasyprint
