@@ -7,6 +7,7 @@ from PIL import Image
 from torchvision import transforms
 import gdown
 from weasyprint import HTML
+import altair as alt
 
 # --- MODEL DOWNLOAD & CACHING ---
 @st.cache_resource
@@ -93,10 +94,12 @@ def load_satellite_model():
 satellite_model = load_satellite_model()
 
 def generate_time_series_data(current_risk_score, months=6):
+    # Lock random seed based on risk score for reproducible results across reruns
     np.random.seed(int(current_risk_score * 10000))
     
     current_ndvi = max(0.05, 0.85 - (current_risk_score * 0.7))
     
+    # Generate dates in chronological order
     dates = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
     
     historical_ndvi = []
@@ -104,8 +107,9 @@ def generate_time_series_data(current_risk_score, months=6):
         val = current_ndvi + (0.015 * i) + np.random.normal(0, 0.015)
         historical_ndvi.append(min(0.85, max(0.05, val)))
     
+    # Format dates as Month Year strings
     df = pd.DataFrame({
-        "Date": dates,
+        "Month": dates.strftime("%b %Y"),
         "NDVI Baseline": [0.65] * months,
         "Observed NDVI": historical_ndvi
     })
@@ -331,7 +335,22 @@ with tab2:
 
             col_ts1, col_ts2 = st.columns([2, 1])
             with col_ts1:
-                st.line_chart(s_res["ts_df"].set_index("Date"))
+                # Reshape DataFrame for multi-line plotting
+                df_melted = s_res["ts_df"].melt(id_vars=["Month"], var_name="Metric", value_name="NDVI")
+
+                # Render chart preserving exact row order (sort=None)
+                chart = (
+                    alt.Chart(df_melted)
+                    .mark_line(point=True)
+                    .encode(
+                        x=alt.X("Month:N", sort=None, title="Timeline"),
+                        y=alt.Y("NDVI:Q", scale=alt.Scale(domain=[0, 1.0]), title="NDVI Score"),
+                        color=alt.Color("Metric:N", scale=alt.Scale(range=["#94a3b8", "#0284c7"]))
+                    )
+                    .properties(height=300)
+                )
+
+                st.altair_chart(chart, use_container_width=True)
 
             with col_ts2:
                 st.metric(
