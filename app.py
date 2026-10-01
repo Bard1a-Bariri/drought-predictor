@@ -107,7 +107,7 @@ def generate_time_series_data(current_risk_score, months=6):
         historical_ndvi.append(min(0.85, max(0.05, val)))
     
     df = pd.DataFrame({
-        "Date": dates.strftime("%b %Y"),
+        "Date": dates,
         "NDVI Baseline": [0.65] * months,
         "Observed NDVI": historical_ndvi
     })
