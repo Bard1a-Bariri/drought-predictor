@@ -333,7 +333,7 @@ with tab2:
 
             col_ts1, col_ts2 = st.columns([2, 1])
             with col_ts1:
-                st.line_chart(s_res["ts_df"].set_index("Date"))
+                st.line_chart(s_res["ts_df"], x="Date", y=["NDVI Baseline", "Observed NDVI"])
 
             with col_ts2:
                 st.metric(
