@@ -119,7 +119,7 @@ def generate_time_series_data(current_risk_score, months=6):
 
 def generate_pdf_report(region_name, risk_tier, risk_percentage, steps, loss_rate=None):
     steps_html = "".join([f"<li>{step}</li>" for step in steps])
-    trend_html = f"<p><strong>Monthly Drying Velocity (&Delta;NDVI/&Delta;t):</strong> {loss_rate:.3f}</p>" if loss_rate is not None else ""
+    trend_html = f"<p><strong>Drought Speed Index (&Delta;NDVI/&Delta;t):</strong> {loss_rate:.3f}</p>" if loss_rate is not None else ""
     
     html_template = f"""
     <!DOCTYPE html>
@@ -268,25 +268,28 @@ with tab2:
                     status_tier = "CRITICAL DROUGHT RISK"
                     status_color = "error"
                     next_steps = [
-                        "Emergency Livestock Relocation: Initiate pasture transfer immediately.",
-                        "Water Management: Enforce immediate water rationing in high-risk zones.",
-                        "High-Frequency Monitoring: Schedule daily satellite spectral re-scans."
+                        "Move cattle immediately: Transfer herds off overgrazed paddocks right away to give remaining grass roots a chance to survive.",
+                        "Ration water supplies: Inspect all troughs and pipes for leaks today, and prioritize livestock drinking needs over crop irrigation.",
+                        "Source backup feed: Order supplemental hay or silage now before local prices spike or local feed runs out.",
+                        "Daily pasture checks: Walk the pastures daily to check grass height and soil cracks so you can spot worsening dry spots early."
                     ]
                 elif drought_percentage >= 30:
                     status_tier = "MODERATE DROUGHT WARNING"
                     status_color = "warning"
                     next_steps = [
-                        "Rotational Grazing: Reduce grazing density on sparse vegetation patches.",
-                        "Irrigation Efficiency: Audit and adjust drip/sprinkler systems.",
-                        "Soil Moisture Audits: Perform ground-level soil testing in vulnerable sections."
+                        "Shorten grazing times: Rotate cattle through paddocks twice as quickly so they don't graze grass below 3-4 inches.",
+                        "Audit irrigation equipment: Check sprinklers and drip lines for clogged nozzles, and run watering systems only at night or early morning to cut evaporation.",
+                        "Test soil moisture on foot: Take a soil probe or shovel to low spots and exposed ridges to see how deep moisture goes before deciding to irrigate.",
+                        "Plan emergency feed options: Contact local suppliers to check current hay availability in case dry conditions stretch into next month."
                     ]
                 else:
                     status_tier = "HEALTHY / MINIMAL DROUGHT RISK"
                     status_color = "success"
                     next_steps = [
-                        "Maintain Standard Rotation: Forage capacity is sufficient for herd density.",
-                        "Soil Health Monitoring: Keep standard seasonal monitoring schedule.",
-                        "Rainwater Capture: Prepare infrastructure for upcoming dry cycles."
+                        "Stick to regular grazing rotations: Your grass growth is strong enough for your current herd size, so keep moving livestock on your standard schedule.",
+                        "Clear out water catchment: Inspect pond inlets, gutters, and rainwater tanks now while conditions are good so they catch every drop during the next rain.",
+                        "Maintain normal soil testing: Continue routine seasonal soil sampling to keep track of key nutrients like nitrogen and organic matter.",
+                        "Rest paddocks evenly: Let grazed sections fully recover for 20-30 days before letting livestock back on them to build up root depth."
                     ]
 
                 ts_df, delta_ndvi = generate_time_series_data(drought_risk_score)
@@ -354,7 +357,7 @@ with tab2:
 
             with col_ts2:
                 st.metric(
-                    label="Monthly Drying Velocity (ΔNDVI / Δt)",
+                    label="Drought Speed Index (ΔNDVI / Δt)",
                     value=f"{s_res['delta_ndvi']:.3f}",
                     delta=f"{s_res['delta_ndvi']:.3f}",
                     delta_color="inverse"
