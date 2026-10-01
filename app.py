@@ -97,7 +97,7 @@ def generate_time_series_data(current_risk_score, months=6):
     
     current_ndvi = max(0.05, 0.85 - (current_risk_score * 0.7))
     
-    date_range = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
+    dates = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
     
     historical_ndvi = []
     for i in range(months - 1, -1, -1):
@@ -105,13 +105,10 @@ def generate_time_series_data(current_risk_score, months=6):
         historical_ndvi.append(min(0.85, max(0.05, val)))
     
     df = pd.DataFrame({
-        "Sort_Date": date_range,
-        "Date": date_range.strftime("%b %Y"),
+        "Date": dates,
         "NDVI Baseline": [0.65] * months,
         "Observed NDVI": historical_ndvi
     })
-    
-    df = df.sort_values("Sort_Date").drop(columns=["Sort_Date"])
     
     loss_rate = df["Observed NDVI"].iloc[-1] - df["Observed NDVI"].iloc[-2]
     return df, loss_rate
@@ -334,7 +331,7 @@ with tab2:
 
             col_ts1, col_ts2 = st.columns([2, 1])
             with col_ts1:
-                st.line_chart(s_res["ts_df"], x="Date", y=["NDVI Baseline", "Observed NDVI"])
+                st.line_chart(s_res["ts_df"].set_index("Date"))
 
             with col_ts2:
                 st.metric(
