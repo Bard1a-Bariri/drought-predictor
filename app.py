@@ -93,24 +93,25 @@ def load_satellite_model():
 satellite_model = load_satellite_model()
 
 def generate_time_series_data(current_risk_score, months=6):
+    np.random.seed(int(current_risk_score * 10000))
+    
     current_ndvi = max(0.05, 0.85 - (current_risk_score * 0.7))
     
-    
-    dates = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
-    
+    date_range = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
     
     historical_ndvi = []
     for i in range(months - 1, -1, -1):
-       
-        val = current_ndvi + (0.03 * i) + np.random.normal(0, 0.015)
-        
+        val = current_ndvi + (0.015 * i) + np.random.normal(0, 0.015)
         historical_ndvi.append(min(0.85, max(0.05, val)))
     
     df = pd.DataFrame({
-        "Date": dates,
+        "Sort_Date": date_range,
+        "Date": date_range.strftime("%b %Y"),
         "NDVI Baseline": [0.65] * months,
         "Observed NDVI": historical_ndvi
     })
+    
+    df = df.sort_values("Sort_Date").drop(columns=["Sort_Date"])
     
     loss_rate = df["Observed NDVI"].iloc[-1] - df["Observed NDVI"].iloc[-2]
     return df, loss_rate
