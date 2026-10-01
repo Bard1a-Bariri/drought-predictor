@@ -92,12 +92,19 @@ def load_satellite_model():
 
 satellite_model = load_satellite_model()
 
-# --- TIME-SERIES CALCULATION ENGINE ---
 def generate_time_series_data(current_risk_score, months=6):
     current_ndvi = max(0.05, 0.85 - (current_risk_score * 0.7))
+    
+    
     dates = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
     
-    historical_ndvi = [min(0.9, current_ndvi + (0.08 * i) + np.random.normal(0, 0.02)) for i in range(months)][::-1]
+    
+    historical_ndvi = []
+    for i in range(months - 1, -1, -1):
+       
+        val = current_ndvi + (0.03 * i) + np.random.normal(0, 0.015)
+        
+        historical_ndvi.append(min(0.85, max(0.05, val)))
     
     df = pd.DataFrame({
         "Date": dates.strftime("%b %Y"),
@@ -108,7 +115,6 @@ def generate_time_series_data(current_risk_score, months=6):
     loss_rate = df["Observed NDVI"].iloc[-1] - df["Observed NDVI"].iloc[-2]
     return df, loss_rate
 
-# --- PDF REPORT GENERATOR ---
 def generate_pdf_report(region_name, risk_tier, risk_percentage, steps, loss_rate=None):
     steps_html = "".join([f"<li>{step}</li>" for step in steps])
     trend_html = f"<p><strong>Monthly Drying Velocity (&Delta;NDVI/&Delta;t):</strong> {loss_rate:.3f}</p>" if loss_rate is not None else ""
@@ -151,7 +157,6 @@ st.markdown("---")
 
 tab1, tab2 = st.tabs(["🌿 Ground Assessment", "🛰️ Satellite Assessment"])
 
-# --- TAB 1: GROUND MODEL ---
 with tab1:
     st.header("Ground Drought Calculator")
     st.write("Upload a photo of plant leaves to analyze water stress levels...")
