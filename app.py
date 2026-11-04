@@ -163,7 +163,13 @@ with tab1:
     st.header("Ground Drought Calculator")
     st.write("Upload a photo of plant leaves to analyze water stress levels...")
 
-    uploaded_file = st.camera_input("Take a picture...")
+    input_method = st.radio("Select Input Method:", ["Upload Image File", "Use Web Camera"], horizontal=True)
+
+    uploaded_file = None
+    if input_method == "Upload Image File":
+        uploaded_file = st.file_uploader("Choose a leaf photo...", type=["jpg", "jpeg", "png"], key="ground_uploader")
+    else:
+        uploaded_file = st.camera_input("Take a picture...")
 
     if uploaded_file is not None:
         raw_img = Image.open(uploaded_file).convert("RGB")
