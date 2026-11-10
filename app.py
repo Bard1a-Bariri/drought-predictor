@@ -9,7 +9,6 @@ import gdown
 from weasyprint import HTML
 import altair as alt
 
-# --- MODEL DOWNLOAD & CACHING ---
 @st.cache_resource
 def download_and_load_models():
     ground_path = "ground_water_stress.pth"
@@ -94,12 +93,10 @@ def load_satellite_model():
 satellite_model = load_satellite_model()
 
 def generate_time_series_data(current_risk_score, months=6):
-    # Lock random seed based on risk score for reproducible results across reruns
     np.random.seed(int(current_risk_score * 10000))
     
     current_ndvi = max(0.05, 0.85 - (current_risk_score * 0.7))
     
-    # Generate dates in chronological order
     dates = pd.date_range(end=pd.Timestamp.now(), periods=months, freq="ME")
     
     historical_ndvi = []
@@ -107,7 +104,6 @@ def generate_time_series_data(current_risk_score, months=6):
         val = current_ndvi + (0.015 * i) + np.random.normal(0, 0.015)
         historical_ndvi.append(min(0.85, max(0.05, val)))
     
-    # Format dates as Month Year strings
     df = pd.DataFrame({
         "Month": dates.strftime("%b %Y"),
         "NDVI Baseline": [0.65] * months,
@@ -233,7 +229,6 @@ with tab1:
                 mime="application/pdf"
             )
 
-# --- TAB 2: SATELLITE MODEL + TIME SERIES ---
 with tab2:
     st.header("Satellite Landscape Index")
     st.write("Upload a satellite tile image to determine grazing land capacity.")
@@ -250,7 +245,6 @@ with tab2:
 
         rgb_tensor = SATELLITE_TRANSFORM(raw_sat_img)
 
-        # Synthetic 10-band spectral expansion
         R = rgb_tensor[0:1, :, :]
         G = rgb_tensor[1:2, :, :]
         B = rgb_tensor[2:3, :, :]
@@ -265,6 +259,7 @@ with tab2:
         if st.button("Run Satellite Analysis", type="primary"):
             with st.spinner("Processing spectral array & computing temporal trends..."):
                 res = calculate_pred(input_satellite_tensor, satellite_model)
+                gradcam_satellite_img = generate_gradcam(input_satellite_tensor, satellite_model, raw_sat_img)
                 probs = res["class_probabilities"]
 
                 drought_risk_score = (probs[0] * 1.00) + (probs[1] * 0.85) + (probs[2] * 0.10) + (probs[3] * 0.00)
@@ -303,6 +298,7 @@ with tab2:
                 st.session_state["sat_results"] = {
                     "drought_percentage": drought_percentage,
                     "drought_risk_score": drought_risk_score,
+                    "gradcam_img": gradcam_satellite_img,
                     "status_tier": status_tier,
                     "status_color": status_color,
                     "probs": probs,
@@ -338,16 +334,18 @@ with tab2:
                 for label, prob in zip(class_labels, s_res['probs']):
                     st.write(f"**{label}:** `{float(prob)*100:.1f}%`")
                     st.progress(float(prob))
+        
+            st.markdown("---")
+            st.subheader("Corresponding Heatmap")
+            st.image(s_res["gradcam_img"], use_container_width=True)
 
             st.markdown("---")
             st.subheader("📈 6-Month Time-Series Trend & Velocity")
 
             col_ts1, col_ts2 = st.columns([2, 1])
             with col_ts1:
-                # Reshape DataFrame for multi-line plotting
                 df_melted = s_res["ts_df"].melt(id_vars=["Month"], var_name="Metric", value_name="NDVI")
 
-                # Render chart preserving exact row order (sort=None)
                 chart = (
                     alt.Chart(df_melted)
                     .mark_line(point=True)
