@@ -12,11 +12,22 @@ import altair as alt
 @st.cache_resource
 def download_and_load_models():
     ground_path = "ground_water_stress.pth"
-    if os.path.exists(ground_path) and os.path.getsize(ground_path) < 1_000_000:
-        os.remove(ground_path)
+    
+    if os.path.exists(ground_path):
+        with open(ground_path, "rb") as f:
+            magic = f.read(4)
+        if magic != b"PK\x03\x04":
+            os.remove(ground_path)
+
     if not os.path.exists(ground_path):
         ground_id = "1WDDSMYceMJ9NrzdGAkVnun4kNEtWE1PG"
         gdown.download(id=ground_id, output=ground_path, quiet=False)
+        
+        with open(ground_path, "rb") as f:
+            if f.read(4) != b"PK\x03\x04":
+                os.remove(ground_path)
+                direct_url = f"https://drive.usercontent.google.com/download?id={ground_id}&export=download&confirm=t"
+                urllib.request.urlretrieve(direct_url, ground_path)
 
     sat_path = "satellite_droughtwatch.pth"
     if not os.path.exists(sat_path):
