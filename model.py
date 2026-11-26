@@ -9,12 +9,14 @@ class GroundDroughtModel(nn.Module):
     def __init__(self):
         super(GroundDroughtModel, self).__init__()
         self.model = resnet18(weights=ResNet18_Weights.DEFAULT)
-        
+
         for param in self.model.layer4.parameters():
             param.requires_grad = True
-            
+
         in_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(in_features, 1)
+        self.model.fc = nn.Sequential(
+            nn.Linear(in_features, 1)
+        )
 
     def forward(self, x):
         return self.model(x)
