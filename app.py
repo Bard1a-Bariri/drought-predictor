@@ -58,25 +58,30 @@ SATELLITE_TRANSFORM = transforms.Compose([
 def load_ground_model():
     model = GroundDroughtModel()
     loaded_successfully = False
+    missing, unexpected = [], []
     try:
-        model.load_state_dict(
-            torch.load("ground_water_stress.pth", map_location=DEVICE, weights_only=False),
-            strict=False
-        )
-        loaded_successfully = True
-    except Exception:
+        checkpoint = torch.load("ground_water_stress.pth", map_location=DEVICE, weights_only=False)
+        # Unwrap if the file is a full training checkpoint dict rather than a raw state_dict
+        state_dict = checkpoint.get("model_state_dict", checkpoint.get("state_dict", checkpoint))
+        
+        result = model.load_state_dict(state_dict, strict=False)
+        missing = result.missing_keys
+        unexpected = result.unexpected_keys
+        loaded_successfully = len(missing) == 0
+    except Exception as e:
+        st.sidebar.error(f"Load error: {e}")
         loaded_successfully = False
 
     model.to(DEVICE)
     model.eval()
-    return model, loaded_successfully
+    return model, loaded_successfully, missing, unexpected
 
-ground_model, is_loaded = load_ground_model()
+ground_model, is_loaded, missing_keys, unexpected_keys = load_ground_model()
 
 if is_loaded:
-    st.sidebar.success("Loaded Ground Model")
+    st.sidebar.success("Loaded Ground Model (All layers matched)")
 else:
-    st.sidebar.warning("Could not load ground_water_stress.pth (using unweighted model)")
+    st.sidebar.warning(f"Layer mismatch! Missing: {missing_keys[:4]} | Unexpected: {unexpected_keys[:4]}")
 
 @st.cache_resource
 def load_satellite_model():
