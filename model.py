@@ -43,7 +43,7 @@ def calculate_pred(ready_tensor, model):
         logits = model(ready_tensor)
         
         if logits.shape[-1] == 1:
-            score = torch.sigmoid(logits).item()
+            score = 1.0 - torch.sigmoid(logits).item()
             return {"type": "ground", "risk_score": score}
         
         else:
